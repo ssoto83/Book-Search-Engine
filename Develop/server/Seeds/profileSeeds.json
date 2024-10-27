@@ -1,0 +1,15 @@
+[
+    {
+      "name": "Susana",
+      "email": "susana@gmail.com",
+      "password": "testing123",
+      "skills": [
+        "JavaScript",
+        "CSS",
+        "HTML",
+        "Design Systems",
+        "Typescript",
+        "PWAs"
+      ]
+    }
+  ]
