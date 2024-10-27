@@ -7,18 +7,22 @@ const { typeDefs, resolvers } = require('./schemas');
 const { authMiddleware } = require('./utils/auth'); // Import your auth middleware
 
 const app = express();
-const PORT = process.env.PORT || 3005;
+const PORT = process.env.PORT || 3005; // Use the PORT environment variable
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 
 // Create a new Apollo Server instance
 const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: authMiddleware, // Add the auth middleware to the context
+  persistedQueries: { cache: 'bounded' }, // Set cache to bounded or disable persisted queries
 });
 
 // Function to start the Apollo server
 const startApolloServer = async () => {
-  await server.start();  // Make sure to await the start
+  await server.start();  // Await the start
   server.applyMiddleware({ app }); // Apply middleware
 
   // Middleware for parsing JSON and URL-encoded data
@@ -27,8 +31,8 @@ const startApolloServer = async () => {
 
   // Serve static assets in production
   if (process.env.NODE_ENV === 'production') {
-     app.use(express.static(path.join(__dirname, '../client/dist')));
- }
+    app.use(express.static(path.join(__dirname, '../client/dist')));
+  }
 
   // Use routes
   app.use(routes);
@@ -36,7 +40,7 @@ const startApolloServer = async () => {
   // Start the database and server
   db.once('open', () => {
     app.listen(PORT, () => {
-      console.log(`🌍 Now listening on localhost:${PORT}${server.graphqlPath}`);
+      console.log(`🌍 Now listening on port ${PORT}${server.graphqlPath}`); // Updated log message
     });
   });
 };

@@ -1,34 +1,33 @@
-# E-commerce Back End Application    
-## Description  
+# Book Search Engine   
+## Description    
+The Book Search Engine is a user-friendly web application designed for avid readers who want to discover new books and keep track of their reading interests. Users can search for books, create accounts, and save their favorite titles for future reference.  
 
-This application allows for CRUD operations on a task management system using Sequelize and PostgreSQL. It supports categories, products, and tags.
+## Table of Contents      
+* Installation      
+* Steps     
+* Render Link  
+* GitHub Repository Link         
+* Application screenshot      
 
-## Features
+## Installation     
+
+
+
+## Steps   
+
+
+## Render Link  
+https://book-search-engine-xieu.onrender.com  
  
 
-## Table of Contents    
-
-* Installation    
-* Steps   
-* Repository link     
-* Walkthrough video link       
-* Application screenshot    
-
-## Installation note    
-
-
-
-## Steps 
- 
-
-##  Repository link  
+## GitHub Repository Link  
+https://github.com/ssoto83/Book-Search-Engine.git  
 
 
 
 
-## Walkthrough video link
 
-https://drive.google.com/file/d/1aKXUbbfsnZQ5o3FgsHjPpBuqLxhLJ93R/view?usp=sharing  
+#
 
 ## Application screenshot  
 
