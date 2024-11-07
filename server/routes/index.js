@@ -4,7 +4,11 @@ const apiRoutes = require('./api');
 
 router.use('/api', apiRoutes);
 
-// serve up react front-end in production
+
+// Serve static files from React build directory
+router.use(express.static(path.join(__dirname, '../../client/dist')));
+
+// Serve the React front-end in production (SPA fallback)
 router.use((req, res) => {
   res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
 });

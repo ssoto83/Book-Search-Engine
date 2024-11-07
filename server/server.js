@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');  // Import the CORS package
 const path = require('path');
 const { ApolloServer } = require('@apollo/server');
 const { expressMiddleware } = require('@apollo/server/express4');
@@ -8,13 +9,24 @@ const db = require('./config/connection');
 const User = require('./models/User'); // Assuming you have a User model
 const bcrypt = require('bcryptjs'); // Add bcrypt for password hashing
 
-const PORT = process.env.PORT || 3005;
+const PORT = process.env.PORT || 3008;
 const server = new ApolloServer({
   typeDefs,
   resolvers,
 });
 
 const app = express();
+
+// CORS configuration
+const corsOptions = {
+  origin: 'http://localhost:3008',  // Change this to the frontend URL
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],  // Add other custom headers here
+  credentials: true,  // If you're sending cookies or authentication headers
+};
+
+// Enable CORS
+app.use(cors(corsOptions));
 
 // Set up Apollo Server and Express middleware
 const startApolloServer = async () => {
