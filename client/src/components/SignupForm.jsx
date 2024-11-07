@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
-
 import { useMutation } from '@apollo/client';
 import { ADD_USER } from '../utils/mutations';
-
 import Auth from '../utils/auth';
 
 const SignupForm = () => {
@@ -13,13 +11,20 @@ const SignupForm = () => {
     email: '',
     password: '',
   });
-  // set state for form validation
-  const [validated] = useState(false);
-  // set state for alert
+  
+  // state for form validation
+  const [validated, setValidated] = useState(false);
+  
+  // state for alert visibility
   const [showAlert, setShowAlert] = useState(false);
 
+  // state for loading state
+  const [loading, setLoading] = useState(false);
+
+  // handle mutation for adding user
   const [addUser, { error }] = useMutation(ADD_USER);
 
+  // handle error visibility
   useEffect(() => {
     if (error) {
       setShowAlert(true);
@@ -28,53 +33,48 @@ const SignupForm = () => {
     }
   }, [error]);
 
+  // handle form input changes
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setUserFormData({ ...userFormData, [name]: value });
   };
 
+  // handle form submit
   const handleFormSubmit = async (event) => {
     event.preventDefault();
-
-    // check if form has everything (as per react-bootstrap docs)
     const form = event.currentTarget;
     if (form.checkValidity() === false) {
-      event.preventDefault();
       event.stopPropagation();
+      setValidated(true); // show validation feedback if invalid
+    } else {
+      setLoading(true);  // start loading state when submitting
+      try {
+        const { data } = await addUser({
+          variables: { ...userFormData },  // pass form data to mutation
+        });
+        console.log(data); // Log the data returned from the mutation
+        Auth.login(data.addUser.token);  // login the user by storing token
+        setUserFormData({ username: '', email: '', password: '' });  // clear form after successful submission
+      } catch (err) {
+        console.error(err);
+        setShowAlert(true);  // show error alert on failure
+      }
+      setLoading(false);  // stop loading state after submitting
     }
-
-    try {
-      const { data } = await addUser({
-        variables: { ...userFormData },
-      });
-      console.log(data);
-      Auth.login(data.addUser.token);
-    } catch (err) {
-      console.error(err);
-    }
-
-    setUserFormData({
-      username: '',
-      email: '',
-      password: '',
-    });
   };
 
   return (
     <>
-      {/* This is needed for the validation functionality above */}
+      {/* Form with validation */}
       <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
-        {/* show alert if server response is bad */}
-        <Alert
-          dismissible
-          onClose={() => setShowAlert(false)}
-          show={showAlert}
-          variant="danger"
-        >
+        
+        {/* Alert if signup fails */}
+        <Alert dismissible onClose={() => setShowAlert(false)} show={showAlert} variant="danger">
           Something went wrong with your signup!
         </Alert>
 
-        <Form.Group className='mb-3'>
+        {/* Username field */}
+        <Form.Group className="mb-3">
           <Form.Label htmlFor="username">Username</Form.Label>
           <Form.Control
             type="text"
@@ -89,7 +89,8 @@ const SignupForm = () => {
           </Form.Control.Feedback>
         </Form.Group>
 
-        <Form.Group className='mb-3'>
+        {/* Email field */}
+        <Form.Group className="mb-3">
           <Form.Label htmlFor="email">Email</Form.Label>
           <Form.Control
             type="email"
@@ -104,7 +105,8 @@ const SignupForm = () => {
           </Form.Control.Feedback>
         </Form.Group>
 
-        <Form.Group className='mb-3'>
+        {/* Password field */}
+        <Form.Group className="mb-3">
           <Form.Label htmlFor="password">Password</Form.Label>
           <Form.Control
             type="password"
@@ -118,18 +120,14 @@ const SignupForm = () => {
             Password is required!
           </Form.Control.Feedback>
         </Form.Group>
+
+        {/* Submit button */}
         <Button
-          disabled={
-            !(
-              userFormData.username &&
-              userFormData.email &&
-              userFormData.password
-            )
-          }
+          disabled={loading || !(userFormData.username && userFormData.email && userFormData.password)}
           type="submit"
           variant="success"
         >
-          Submit
+          {loading ? 'Signing Up...' : 'Submit'}
         </Button>
       </Form>
     </>
