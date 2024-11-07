@@ -8,7 +8,7 @@ const db = require('./config/connection');
 const User = require('./models/User'); // Assuming you have a User model
 const bcrypt = require('bcryptjs'); // Add bcrypt for password hashing
 
-const PORT = process.env.PORT || 3006;
+const PORT = process.env.PORT || 3005;
 const server = new ApolloServer({
   typeDefs,
   resolvers,
