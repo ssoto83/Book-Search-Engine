@@ -1,49 +1,77 @@
 const express = require('express');
 const path = require('path');
-const db = require('./config/connection');
-const routes = require('./routes');
-const { ApolloServer } = require('apollo-server-express');
+const { ApolloServer } = require('@apollo/server');
+const { expressMiddleware } = require('@apollo/server/express4');
+const { authMiddleware } = require('./utils/auth');
 const { typeDefs, resolvers } = require('./schemas');
-const { authMiddleware } = require('./utils/auth'); // Import your auth middleware
+const db = require('./config/connection');
+const User = require('./models/User'); // Assuming you have a User model
+const bcrypt = require('bcryptjs'); // Add bcrypt for password hashing
 
-const app = express();
-const PORT = process.env.PORT || 3005; // Use the PORT environment variable
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
-
-// Create a new Apollo Server instance
+const PORT = process.env.PORT || 3005;
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: authMiddleware, // Add the auth middleware to the context
-  persistedQueries: { cache: 'bounded' }, // Set cache to bounded or disable persisted queries
 });
 
-// Function to start the Apollo server
-const startApolloServer = async () => {
-  await server.start();  // Await the start
-  server.applyMiddleware({ app }); // Apply middleware
+const app = express();
 
-  // Middleware for parsing JSON and URL-encoded data
-  app.use(express.urlencoded({ extended: true }));
+// Set up Apollo Server and Express middleware
+const startApolloServer = async () => {
+  await server.start();
+
+  // Middleware to parse incoming requests
+  app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
-  // Serve static assets in production
+  // REST API endpoint for creating a user (POST /api/users)
+  app.post('/api/users', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      // Check if the user already exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ error: 'User already exists!' });
+      }
+
+      // Hash the password before saving to the database
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create the new user
+      const newUser = await User.create({ email, password: hashedPassword });
+
+      res.status(201).json(newUser);
+    } catch (err) {
+      console.error('Error creating user:', err);
+      res.status(500).json({ error: 'Failed to create user' });
+    }
+  });
+
+  // Apollo GraphQL middleware
+  app.use('/graphql', expressMiddleware(server, {
+    context: authMiddleware
+  }));
+
+  // Serve frontend assets in production
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../client/dist')));
+
+    // Catch-all route for single-page application (SPA) support
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    });
   }
 
-  // Use routes
-  app.use(routes);
-
-  // Start the database and server
+  // Start MongoDB connection and the server
   db.once('open', () => {
     app.listen(PORT, () => {
-      console.log(`🌍 Now listening on port ${PORT}${server.graphqlPath}`); // Updated log message
+      console.log(`API server running on port ${PORT}!`);
+      console.log(`Use GraphQL at http://localhost:${PORT}/graphql`);
+      console.log(`Use REST API for users at http://localhost:${PORT}/api/users`);
     });
   });
 };
 
-// Call the function to start the server
+// Start the Apollo Server
 startApolloServer();

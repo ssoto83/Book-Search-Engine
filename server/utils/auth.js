@@ -1,38 +1,39 @@
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
-
-// Set token secret and expiration date
-const secret = 'mysecretsshhhhh';
+const { GraphQLError } = require('graphql');
+const secret = 'secretshhh';
 const expiration = '2h';
 
 module.exports = {
-  // Function to verify and decode the token
+  AuthenticationError: new GraphQLError('Could not authenticate user.', {
+    extensions: {
+      code: 'UNAUTHENTICATED',
+    },
+  }),
   authMiddleware: function ({ req }) {
-    // Allows token to be sent via headers
-    let token = req.headers.authorization || '';
+    // allows token to be sent via req.body, req.query, or headers
+    let token = req.body.token || req.query.token || req.headers.authorization;
 
     // ["Bearer", "<tokenvalue>"]
-    if (token) {
+    if (req.headers.authorization) {
       token = token.split(' ').pop().trim();
     }
 
     if (!token) {
-      return { user: null }; // No token means no user
+      return req;
     }
 
-    // Verify token and get user data out of it
     try {
       const { data } = jwt.verify(token, secret, { maxAge: expiration });
-      return { user: data }; // Return user data
+      req.user = data;
     } catch {
       console.log('Invalid token');
-      return { user: null }; // Invalid token means no user
     }
-  },
 
-  // Function to sign a token
+    return req;
+  },
   signToken: function ({ username, email, _id }) {
     const payload = { username, email, _id };
+
     return jwt.sign({ data: payload }, secret, { expiresIn: expiration });
   },
 };
